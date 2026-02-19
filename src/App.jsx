@@ -19,8 +19,8 @@ const db = getFirestore(app);
 
 // Configurazione - PERSONALIZZA QUI
 const CONFIG = {
-  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
-  votingDuration: 30 * 60 * 1000,
+  votingStartTime: new Date('2026-02-20T01:02:00').getTime(),
+  votingDuration: 2 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
