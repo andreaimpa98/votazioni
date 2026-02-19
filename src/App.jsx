@@ -3,8 +3,8 @@ import { Trophy, Clock, Users, CheckCircle, XCircle, Crown, Sparkles } from 'luc
 
 // Configurazione - PERSONALIZZA QUI
 const CONFIG = {
-  votingStartTime: new Date('2026-02-21T23:00:00').getTime(), // Data e ora inizio votazioni
-  votingDuration: 30 * 60 * 1000, // 20 minuti in millisecondi
+  votingStartTime: new Date('2026-02-20T23:00:10').getTime(), // Data e ora inizio votazioni
+  votingDuration: 5 * 60 * 1000, // 20 minuti in millisecondi
   categories: [
     {
       id: 'cat1',
