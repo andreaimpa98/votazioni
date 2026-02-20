@@ -16,8 +16,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-20T13:13:00').getTime(),
-  votingDuration: 2 * 60 * 1000,
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -74,6 +74,8 @@ const App = () => {
   const [allVotes, setAllVotes] = useState([]);
   const [resultsPublished, setResultsPublished] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [firestoreStatus, setFirestoreStatus] = useState('connecting');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
@@ -81,80 +83,77 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    loadData();
-    checkIfVoted();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(query(collection(db, 'votes')), (snapshot) => {
-      const votesData = [];
-      snapshot.forEach((doc) => votesData.push({ id: doc.id, ...doc.data() }));
-      setAllVotes(votesData);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(query(collection(db, 'settings')), (snapshot) => {
-      snapshot.forEach((doc) => {
-        if (doc.data().resultsPublished !== undefined) {
-          setResultsPublished(doc.data().resultsPublished);
-        }
-      });
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      // Carica solo settings (i voti sono gestiti da onSnapshot in tempo reale)
-      const settingsSnap = await getDocs(collection(db, 'settings'));
-      settingsSnap.forEach((doc) => {
-        if (doc.data().resultsPublished !== undefined) {
-          setResultsPublished(doc.data().resultsPublished);
-        }
-      });
-    } catch (error) {
-      console.log('Errore caricamento dati:', error);
-    }
-  };
-
-  const checkIfVoted = () => {
     const voted = localStorage.getItem('carnival-voted-2026');
     if (voted) setHasVoted(true);
-  };
+  }, []);
+
+  // Listener unico per i voti - real-time su tutti i dispositivi
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'votes')),
+      (snapshot) => {
+        const votesData = [];
+        snapshot.forEach((d) => votesData.push({ id: d.id, ...d.data() }));
+        setAllVotes(votesData);
+        setFirestoreStatus('ok');
+      },
+      (error) => {
+        console.error('Firestore votes error:', error.code, error.message);
+        setFirestoreStatus('error:' + error.code);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Listener per settings
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'settings')),
+      (snapshot) => {
+        snapshot.forEach((d) => {
+          if (d.data().resultsPublished !== undefined) {
+            setResultsPublished(d.data().resultsPublished);
+          }
+        });
+      },
+      (error) => {
+        console.error('Firestore settings error:', error.code, error.message);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
 
   const saveVote = async () => {
-    if (!userData.nome || !userData.cognome) {
-      alert('Inserisci nome e cognome!');
+    if (!userData.nome.trim() || !userData.cognome.trim()) {
+      setSaveError('Inserisci nome e cognome!');
       return;
     }
-
     const allCategoriesVoted = CONFIG.categories.every(cat => votes[cat.id]);
     if (!allCategoriesVoted) {
-      alert('Devi votare per tutte le 4 categorie!');
+      setSaveError('Devi votare per tutte le 4 categorie!');
       return;
     }
 
+    setSaveError('');
     setLoading(true);
 
     try {
-      await addDoc(collection(db, 'votes'), {
+      const docRef = await addDoc(collection(db, 'votes'), {
         nome: userData.nome.trim(),
         cognome: userData.cognome.trim(),
         ...votes,
         timestamp: Date.now(),
         confirmed: false
       });
-      
+      console.log('Voto salvato con ID:', docRef.id);
       localStorage.setItem('carnival-voted-2026', 'true');
+      setHasVoted(true);
       setLoading(false);
       setPage('thankyou');
-      setHasVoted(true);
     } catch (error) {
-      console.error('Errore salvataggio:', error);
-      alert('Errore nel salvataggio del voto. Riprova!');
+      console.error('Errore salvataggio:', error.code, error.message);
       setLoading(false);
+      setSaveError('Errore: ' + (error.code || error.message) + '. Controlla connessione e riprova.');
     }
   };
 
@@ -254,6 +253,25 @@ const App = () => {
       <div style={styles.pageContainer}>
         <div style={styles.adminContainer}>
           <h1 style={styles.adminTitle}>Pannello Admin</h1>
+
+          {firestoreStatus.startsWith('error') && (
+            <div style={{background:'#fef2f2', border:'2px solid #ef4444', borderRadius:'10px', padding:'14px', marginBottom:'16px', color:'#b91c1c', fontSize:'13px'}}>
+              ❌ <strong>Errore Firestore: {firestoreStatus}</strong><br/>
+              I voti non vengono sincronizzati. Vai su <a href="https://console.firebase.google.com/project/votazioni-carnevale/firestore/rules" target="_blank">Firebase Console → Firestore → Rules</a> e imposta le regole come indicato in fondo a questa pagina.
+            </div>
+          )}
+
+          {firestoreStatus === 'connecting' && (
+            <div style={{background:'#fef3c7', borderRadius:'10px', padding:'12px', marginBottom:'16px', color:'#92400e', fontSize:'13px'}}>
+              ⏳ Connessione a Firebase in corso...
+            </div>
+          )}
+
+          {firestoreStatus === 'ok' && (
+            <div style={{background:'#d1fae5', borderRadius:'10px', padding:'10px 14px', marginBottom:'16px', color:'#065f46', fontSize:'13px', display:'flex', alignItems:'center', gap:'8px'}}>
+              <CheckCircle size={16} color="#10b981" /> Firebase connesso — {allVotes.length} voti ricevuti in tempo reale
+            </div>
+          )}
           
           <div style={styles.statsRow}>
             <div style={styles.statCard}>
@@ -347,6 +365,31 @@ const App = () => {
             )}
             <button onClick={() => setPage('home')} style={styles.secondaryButton}>Home</button>
           </div>
+
+          <div style={{marginTop:'24px', background:'#1e1b4b', borderRadius:'12px', padding:'20px'}}>
+            <h3 style={{color:'#a5b4fc', fontSize:'14px', fontWeight:'700', marginBottom:'12px', marginTop:0}}>
+              🔧 Firestore Security Rules — copia queste su Firebase Console
+            </h3>
+            <pre style={{color:'#e0e7ff', fontSize:'12px', overflowX:'auto', margin:0, lineHeight:'1.6'}}>
+{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /votes/{document} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+    match /settings/{document} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}`}
+            </pre>
+            <p style={{color:'#818cf8', fontSize:'11px', marginTop:'10px', marginBottom:0}}>
+              Vai su: console.firebase.google.com → votazioni-carnevale → Firestore → Rules → incolla → Pubblica
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -372,7 +415,7 @@ const App = () => {
     return (
       <div style={styles.pageContainer}>
         <div style={styles.resultsContainer}>
-          <img src="/logo.png" alt="Logo" style={styles.logoMedium} onError={(e) => e.target.style.display = 'none'} />
+          <img src="/logo.png" alt="Logo" style={styles.logoResults} onError={(e) => e.target.style.display = 'none'} />
           <h1 style={styles.resultsTitle}>🏆 I Vincitori! 🏆</h1>
           
           {CONFIG.categories.map((cat, idx) => {
@@ -467,10 +510,19 @@ const App = () => {
       );
     }
 
+    // se ha già votato, mostra thankyou (non bloccare qui con render intermedio)
     if (hasVoted) {
-      // reindirizza silenziosamente, non mostrare blocco intermedio
-      setTimeout(() => setPage('thankyou'), 0);
-      return null;
+      return (
+        <div style={styles.pageContainer}>
+          <div style={styles.card}>
+            <img src="/logo.png" alt="Logo" style={styles.logoSmall} onError={(e) => e.target.style.display = 'none'} />
+            <div style={styles.successIcon}>✅</div>
+            <h1 style={styles.pageTitle}>Hai già votato!</h1>
+            <p style={styles.pageSubtitle}>Puoi votare una sola volta</p>
+            <button onClick={() => setPage('home')} style={styles.primaryButton}>Torna Home</button>
+          </div>
+        </div>
+      );
     }
 
     return (
@@ -548,12 +600,25 @@ const App = () => {
             </div>
           ))}
 
+          {saveError && (
+            <div style={styles.errorBox}>
+              ⚠️ {saveError}
+            </div>
+          )}
+
+          {firestoreStatus.startsWith('error') && (
+            <div style={styles.errorBox}>
+              ❌ Problema di connessione Firebase: {firestoreStatus}<br/>
+              <small>Controlla le Firestore Security Rules su Firebase Console</small>
+            </div>
+          )}
+
           <button 
             onClick={saveVote} 
-            style={styles.primaryButton}
+            style={{...styles.primaryButton, background: loading ? '#a78bfa' : '#7c3aed'}}
             disabled={loading}
           >
-            {loading ? 'Invio in corso...' : 'INVIA VOTI'}
+            {loading ? '⏳ Salvataggio...' : 'INVIA VOTI'}
           </button>
           <button onClick={() => setPage('home')} style={styles.secondaryButton}>Annulla</button>
         </div>
@@ -596,8 +661,28 @@ const App = () => {
         )}
 
         {votingEnded && !resultsPublished && (
-          <div style={styles.infoMessage}>
-            <p style={styles.infoMessageText}>Votazioni terminate. Risultati in arrivo...</p>
+          <div style={styles.waitingScreen}>
+            <img
+              src="/logo.png"
+              alt="Feel the Aura"
+              style={styles.logoSpinning}
+              onError={(e) => e.target.style.display = 'none'}
+            />
+            <div style={styles.waitingTitle}>Votazioni terminate!</div>
+            <div style={styles.waitingSubtitle}>Stiamo contando i voti...<br/>I vincitori saranno annunciati a breve ✨</div>
+            <a
+              href="https://www.instagram.com/feel.the.aura_/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.instagramLink}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+              </svg>
+              Nel frattempo seguici su Instagram!
+            </a>
           </div>
         )}
 
@@ -1284,6 +1369,68 @@ const styles = {
     padding: '24px',
     fontSize: '14px',
   },
+  waitingScreen: {
+    background: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)',
+    borderRadius: '20px',
+    padding: '32px 24px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    border: '2px solid #7c3aed22',
+  },
+  logoSpinning: {
+    width: '90px',
+    height: '90px',
+    objectFit: 'contain',
+    animation: 'logoPulse 2s ease-in-out infinite',
+    marginBottom: '16px',
+    display: 'block',
+    margin: '0 auto 16px auto',
+  },
+  waitingTitle: {
+    fontSize: '20px',
+    fontWeight: '800',
+    color: '#4c1d95',
+    marginBottom: '8px',
+  },
+  waitingSubtitle: {
+    fontSize: '15px',
+    color: '#5b21b6',
+    lineHeight: '1.6',
+    marginBottom: '20px',
+  },
+  instagramLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: 'linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)',
+    color: 'white',
+    borderRadius: '50px',
+    padding: '12px 22px',
+    fontSize: '14px',
+    fontWeight: '700',
+    textDecoration: 'none',
+    boxShadow: '0 4px 15px rgba(131,58,180,0.4)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+  },
+  logoResults: {
+    maxWidth: '240px',
+    width: '70%',
+    height: 'auto',
+    marginBottom: '20px',
+    display: 'block',
+    margin: '0 auto 20px auto',
+  },
+  errorBox: {
+    background: '#fef2f2',
+    border: '2px solid #ef4444',
+    borderRadius: '10px',
+    padding: '14px 16px',
+    marginBottom: '12px',
+    color: '#b91c1c',
+    fontSize: '14px',
+    fontWeight: '600',
+    lineHeight: '1.6',
+  },
 };
 
 const styleSheet = document.createElement('style');
@@ -1298,6 +1445,17 @@ styleSheet.textContent = `
   @keyframes confettiFall {
     0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
     100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+  @keyframes logoPulse {
+    0%   { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px rgba(124,58,237,0.4)); }
+    25%  { transform: scale(1.08) rotate(8deg); filter: drop-shadow(0 0 16px rgba(124,58,237,0.7)); }
+    50%  { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px rgba(124,58,237,0.4)); }
+    75%  { transform: scale(1.08) rotate(-8deg); filter: drop-shadow(0 0 16px rgba(124,58,237,0.7)); }
+    100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 8px rgba(124,58,237,0.4)); }
+  }
+  .instagram-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(131,58,180,0.5) !important;
   }
   button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
