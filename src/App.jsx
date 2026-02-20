@@ -16,8 +16,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-20T13:36:00').getTime(),
-  votingDuration: 2 * 60 * 1000,
+  sessionKey: 'carnival-voted-v1', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -83,7 +84,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const voted = localStorage.getItem('carnival-voted-2026');
+    const voted = localStorage.getItem(CONFIG.sessionKey);
     if (voted) setHasVoted(true);
   }, []);
 
@@ -146,7 +147,7 @@ const App = () => {
         confirmed: false
       });
       console.log('Voto salvato con ID:', docRef.id);
-      localStorage.setItem('carnival-voted-2026', 'true');
+      localStorage.setItem(CONFIG.sessionKey, 'true');
       setHasVoted(true);
       setLoading(false);
       setPage('thankyou');
