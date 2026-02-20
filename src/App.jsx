@@ -16,9 +16,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  sessionKey: 'carnival-voted-v2', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
-  votingStartTime: new Date('2026-02-20T14:45:00').getTime(),
-  votingDuration: 2 * 60 * 1000,
+  sessionKey: 'carnival-voted-v1', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -123,6 +123,22 @@ const App = () => {
     );
     return () => unsubscribe();
   }, []);
+
+  // Redirect automatico quando admin pubblica i risultati
+  // useRef per non fare redirect al caricamento iniziale
+  const resultsPublishedRef = React.useRef(null);
+  useEffect(() => {
+    if (resultsPublishedRef.current === null) {
+      // Prima volta: memorizza stato iniziale senza redirect
+      resultsPublishedRef.current = resultsPublished;
+      return;
+    }
+    // Se cambia da false → true, porta tutti alla pagina risultati
+    if (resultsPublished && !resultsPublishedRef.current) {
+      setPage('results');
+    }
+    resultsPublishedRef.current = resultsPublished;
+  }, [resultsPublished]);
 
   const saveVote = async () => {
     if (!userData.nome.trim() || !userData.cognome.trim()) {
@@ -429,7 +445,7 @@ service cloud.firestore {
   }
 
   // RESULTS PAGE
-  if (page === 'results' || (resultsPublished && votingEnded)) {
+  if (page === 'results') {
     if (!resultsPublished) {
       return (
         <div style={styles.pageContainer}>
