@@ -17,8 +17,8 @@ const db = getFirestore(app);
 
 const CONFIG = {
   sessionKey: 'carnival-voted-v1', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
-  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
-  votingDuration: 20 * 60 * 1000,
+  votingStartTime: new Date('2026-02-20T14:51:00').getTime(),
+  votingDuration: 2 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -498,7 +498,7 @@ service cloud.firestore {
               onError={(e) => e.target.style.display = 'none'}
             />
             <p style={{fontSize:'15px', color:'#5b21b6', fontWeight:'600', margin:'0 0 12px 0'}}>
-              Se ti è piaciuto, seguici! 🎉
+              Ricorda di seguirci su instagram! 🎉
             </p>
             <a
               href="https://www.instagram.com/feel.the.aura_/"
