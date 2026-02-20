@@ -16,8 +16,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-20T12:13:00').getTime(),
-  votingDuration: 5 * 60 * 1000,
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -107,21 +107,13 @@ const App = () => {
 
   const loadData = async () => {
     try {
-      // Carica settings
+      // Carica solo settings (i voti sono gestiti da onSnapshot in tempo reale)
       const settingsSnap = await getDocs(collection(db, 'settings'));
       settingsSnap.forEach((doc) => {
         if (doc.data().resultsPublished !== undefined) {
           setResultsPublished(doc.data().resultsPublished);
         }
       });
-      
-      // Carica voti iniziali
-      const votesSnap = await getDocs(collection(db, 'votes'));
-      const votesData = [];
-      votesSnap.forEach((doc) => {
-        votesData.push({ id: doc.id, ...doc.data() });
-      });
-      setAllVotes(votesData);
     } catch (error) {
       console.log('Errore caricamento dati:', error);
     }
@@ -491,7 +483,9 @@ const App = () => {
     return (
       <div style={styles.pageContainer}>
         <div style={styles.votingContainer}>
-          <img src="/logo.png" alt="Logo" style={styles.logoSmall} onError={(e) => e.target.style.display = 'none'} />
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <img src="/logo.png" alt="Logo" style={styles.logoVoting} onError={(e) => e.target.style.display = 'none'} />
+          </div>
           <h1 style={styles.votingTitle}>Vota Ora!</h1>
           
           <div style={styles.timerBox}>
@@ -686,6 +680,13 @@ const styles = {
     width: '40%',
     height: 'auto',
     marginBottom: '20px',
+  },
+  logoVoting: {
+    maxWidth: '220px',
+    width: '65%',
+    height: 'auto',
+    display: 'block',
+    margin: '0 auto',
   },
   welcomeTitle: {
     fontSize: '28px',
