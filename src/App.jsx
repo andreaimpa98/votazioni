@@ -17,8 +17,8 @@ const db = getFirestore(app);
 
 const CONFIG = {
   sessionKey: 'carnival-voted-v1', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
-  votingStartTime: new Date('2026-02-20T13:48:00').getTime(),
-  votingDuration: 2 * 60 * 1000,
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -448,7 +448,6 @@ service cloud.firestore {
     return (
       <div style={styles.pageContainer}>
         <div style={styles.resultsContainer}>
-          <img src="/logo.png" alt="Logo" style={styles.logoResults} onError={(e) => e.target.style.display = 'none'} />
           <h1 style={styles.resultsTitle}>🏆 I Vincitori! 🏆</h1>
           
           {CONFIG.categories.map((cat, idx) => {
@@ -459,14 +458,13 @@ service cloud.firestore {
               <div key={cat.id} style={{...styles.winnerCard, animationDelay: `${idx * 0.15}s`}}>
                 <div style={styles.winnerIcon}>{cat.icon}</div>
                 <div style={styles.winnerCategory}>{cat.name}</div>
-                {winnerOption?.image && (
-                  <img 
-                    src={winnerOption.image} 
-                    alt={winner.winner} 
-                    style={styles.winnerImage}
-                    onError={(e) => e.target.style.display = 'none'}
-                  />
-                )}
+                <img 
+                  src={winnerOption ? winnerOption.image : ''}
+                  alt={winner.winner} 
+                  style={styles.winnerImage}
+                  onError={(e) => { e.target.onerror = null; e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }}
+                />
+                <div style={{...styles.winnerImagePlaceholder, display:'none'}}>🏆</div>
                 <div style={styles.winnerName}>
                   <Crown size={20} color="#f59e0b" />
                   {winner.winner}
@@ -476,7 +474,30 @@ service cloud.firestore {
             );
           })}
 
-          <button onClick={() => setPage('home')} style={styles.primaryButton}>Torna Home</button>
+          <div style={styles.resultsFooter}>
+            <img
+              src="/logo.png"
+              alt="Feel the Aura"
+              style={styles.logoSpinning}
+              onError={(e) => e.target.style.display = 'none'}
+            />
+            <p style={{fontSize:'15px', color:'#5b21b6', fontWeight:'600', margin:'0 0 12px 0'}}>
+              Se ti è piaciuto, seguici! 🎉
+            </p>
+            <a
+              href="https://www.instagram.com/feel.the.aura_/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{...styles.instagramLink, display:'inline-flex'}}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+              </svg>
+              @feel.the.aura_ su Instagram
+            </a>
+          </div>
         </div>
         
         <div style={styles.confettiContainer}>
@@ -521,7 +542,22 @@ service cloud.firestore {
               I risultati appariranno dopo la chiusura delle votazioni e la conferma da parte degli organizzatori.
             </p>
           </div>
+
+          <a
+            href="https://www.instagram.com/feel.the.aura_/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.instagramLink}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+            Nel frattempo seguici su Instagram!
+          </a>
           
+          <div style={{marginBottom: '16px'}}></div>
           <button onClick={() => setPage('home')} style={styles.primaryButton}>Torna alla Home</button>
         </div>
       </div>
@@ -1411,8 +1447,8 @@ const styles = {
     border: '2px solid #7c3aed22',
   },
   logoSpinning: {
-    width: '90px',
-    height: '90px',
+    width: '120px',
+    height: '120px',
     objectFit: 'contain',
     animation: 'logoPulse 2s ease-in-out infinite',
     marginBottom: '16px',
@@ -1444,6 +1480,12 @@ const styles = {
     textDecoration: 'none',
     boxShadow: '0 4px 15px rgba(131,58,180,0.4)',
     transition: 'transform 0.2s, box-shadow 0.2s',
+  },
+  resultsFooter: {
+    textAlign: 'center',
+    padding: '24px 0 8px 0',
+    borderTop: '2px solid #fde68a',
+    marginTop: '8px',
   },
   logoResults: {
     maxWidth: '240px',
