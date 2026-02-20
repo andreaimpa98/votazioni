@@ -17,8 +17,8 @@ const db = getFirestore(app);
 
 
 const CONFIG = {
-  sessionKey: 'carnival-voted-v4', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
-  votingStartTime: new Date('2026-02-20T15:29:00').getTime(),
+  sessionKey: 'carnival-voted-v5', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
+  votingStartTime: new Date('2026-02-20T15:42:00').getTime(),
   votingDuration: 2 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
