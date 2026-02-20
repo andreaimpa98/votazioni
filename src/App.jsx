@@ -16,8 +16,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-20T12:38:00').getTime(),
-  votingDuration: 3 * 60 * 1000,
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -148,9 +148,9 @@ const App = () => {
       });
       
       localStorage.setItem('carnival-voted-2026', 'true');
-      setHasVoted(true);
       setLoading(false);
       setPage('thankyou');
+      setHasVoted(true);
     } catch (error) {
       console.error('Errore salvataggio:', error);
       alert('Errore nel salvataggio del voto. Riprova!');
@@ -468,16 +468,9 @@ const App = () => {
     }
 
     if (hasVoted) {
-      return (
-        <div style={styles.pageContainer}>
-          <div style={styles.card}>
-            <img src="/logo.png" alt="Logo" style={styles.logoSmall} onError={(e) => e.target.style.display = 'none'} />
-            <h1 style={styles.pageTitle}>Hai già votato!</h1>
-            <p style={styles.pageSubtitle}>Puoi votare una sola volta</p>
-            <button onClick={() => setPage('home')} style={styles.primaryButton}>Torna Home</button>
-          </div>
-        </div>
-      );
+      // reindirizza silenziosamente, non mostrare blocco intermedio
+      setTimeout(() => setPage('thankyou'), 0);
+      return null;
     }
 
     return (
