@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingStartTime: new Date('2026-02-20T11:25:00').getTime(),
   votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
