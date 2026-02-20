@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Clock, Users, CheckCircle, XCircle, Crown, Sparkles } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, onSnapshot, writeBatch } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4SCniDnYFa_vRKdKT5WiCRP0PXd8VLIw",
@@ -16,8 +16,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-20T12:28:00').getTime(),
-  votingDuration: 2 * 60 * 1000,
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
+  votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
     {
@@ -185,6 +185,29 @@ const App = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+    }
+  };
+
+  const resetAll = async () => {
+    if (!window.confirm('⚠️ Sei sicuro? Questa operazione elimina TUTTI i voti e resetta i risultati. Non è reversibile!')) return;
+    try {
+      // Elimina tutti i voti
+      const votesSnap = await getDocs(collection(db, 'votes'));
+      const batch = writeBatch(db);
+      votesSnap.forEach((d) => batch.delete(doc(db, 'votes', d.id)));
+      await batch.commit();
+
+      // Resetta settings
+      const settingsSnap = await getDocs(collection(db, 'settings'));
+      const batch2 = writeBatch(db);
+      settingsSnap.forEach((d) => batch2.update(doc(db, 'settings', d.id), { resultsPublished: false }));
+      await batch2.commit();
+
+      setResultsPublished(false);
+      alert('✅ Reset completato! Voti eliminati e risultati resettati.');
+    } catch (error) {
+      console.error('Errore reset:', error);
+      alert('Errore durante il reset: ' + error.message);
     }
   };
 
@@ -364,6 +387,15 @@ const App = () => {
               </div>
             )}
             <button onClick={() => setPage('home')} style={styles.secondaryButton}>Home</button>
+          </div>
+
+          <div style={{marginTop:'16px'}}>
+            <button onClick={resetAll} style={styles.resetButton}>
+              🗑️ RESET COMPLETO (cancella tutti i voti)
+            </button>
+            <p style={{fontSize:'11px', color:'#9ca3af', textAlign:'center', marginTop:'6px', marginBottom:0}}>
+              Usa solo per i test — elimina tutto e riporta l'app allo stato iniziale
+            </p>
           </div>
 
           <div style={{marginTop:'24px', background:'#1e1b4b', borderRadius:'12px', padding:'20px'}}>
@@ -1419,6 +1451,18 @@ const styles = {
     marginBottom: '20px',
     display: 'block',
     margin: '0 auto 20px auto',
+  },
+  resetButton: {
+    width: '100%',
+    background: '#fee2e2',
+    color: '#991b1b',
+    border: '2px solid #fca5a5',
+    borderRadius: '12px',
+    padding: '14px',
+    fontSize: '14px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
   errorBox: {
     background: '#fef2f2',
