@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CONFIG = {
-  votingStartTime: new Date('2026-02-20T11:25:00').getTime(),
+  votingStartTime: new Date('2026-02-22T23:00:00').getTime(),
   votingDuration: 20 * 60 * 1000,
   adminPassword: 'carnevale2026',
   categories: [
@@ -73,7 +73,6 @@ const App = () => {
   const [adminPassword, setAdminPassword] = useState('');
   const [allVotes, setAllVotes] = useState([]);
   const [resultsPublished, setResultsPublished] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -108,14 +107,23 @@ const App = () => {
 
   const loadData = async () => {
     try {
+      // Carica settings
       const settingsSnap = await getDocs(collection(db, 'settings'));
       settingsSnap.forEach((doc) => {
         if (doc.data().resultsPublished !== undefined) {
           setResultsPublished(doc.data().resultsPublished);
         }
       });
+      
+      // Carica voti iniziali
+      const votesSnap = await getDocs(collection(db, 'votes'));
+      const votesData = [];
+      votesSnap.forEach((doc) => {
+        votesData.push({ id: doc.id, ...doc.data() });
+      });
+      setAllVotes(votesData);
     } catch (error) {
-      console.log('Error:', error);
+      console.log('Errore caricamento dati:', error);
     }
   };
 
@@ -149,16 +157,11 @@ const App = () => {
       
       localStorage.setItem('carnival-voted-2026', 'true');
       setHasVoted(true);
-      setShowConfetti(true);
-      
-      setTimeout(() => {
-        setShowConfetti(false);
-        setPage('thankyou');
-        setLoading(false);
-      }, 2000);
+      setLoading(false);
+      setPage('thankyou');
     } catch (error) {
-      console.error('Error:', error);
-      alert('Errore nel salvataggio. Riprova!');
+      console.error('Errore salvataggio:', error);
+      alert('Errore nel salvataggio del voto. Riprova!');
       setLoading(false);
     }
   };
@@ -427,6 +430,8 @@ const App = () => {
 
   // THANK YOU PAGE
   if (page === 'thankyou') {
+    const timeRemaining = votingEnded ? 0 : Math.max(0, votingEndTime - currentTime);
+    
     return (
       <div style={styles.pageContainer}>
         <div style={styles.card}>
@@ -434,7 +439,22 @@ const App = () => {
           <div style={styles.successIcon}>✨</div>
           <h1 style={styles.pageTitle}>Grazie per aver votato!</h1>
           <p style={styles.pageSubtitle}>Il tuo voto è stato registrato con successo</p>
-          <button onClick={() => setPage('home')} style={styles.primaryButton}>Torna Home</button>
+          
+          {!votingEnded && timeRemaining > 0 && (
+            <div style={styles.countdownBoxSmall}>
+              <Clock size={24} color="#7c3aed" />
+              <div style={styles.countdownLabelSmall}>Fine votazioni tra:</div>
+              <div style={styles.countdownTimerSmall}>{formatTime(timeRemaining)}</div>
+            </div>
+          )}
+          
+          <div style={styles.infoBoxThankYou}>
+            <p style={styles.infoTextThankYou}>
+              I risultati appariranno dopo la chiusura delle votazioni e la conferma da parte degli organizzatori.
+            </p>
+          </div>
+          
+          <button onClick={() => setPage('home')} style={styles.primaryButton}>Torna alla Home</button>
         </div>
       </div>
     );
@@ -550,22 +570,6 @@ const App = () => {
           </button>
           <button onClick={() => setPage('home')} style={styles.secondaryButton}>Annulla</button>
         </div>
-
-        {showConfetti && (
-          <div style={styles.confettiContainer}>
-            {[...Array(80)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  ...styles.confetti,
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  backgroundColor: ['#7c3aed', '#10b981', '#f59e0b'][Math.floor(Math.random() * 3)]
-                }}
-              />
-            ))}
-          </div>
-        )}
       </div>
     );
   }
@@ -981,6 +985,37 @@ const styles = {
   successIcon: {
     fontSize: '64px',
     marginBottom: '16px',
+  },
+  countdownBoxSmall: {
+    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '20px',
+    textAlign: 'center',
+  },
+  countdownLabelSmall: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: '10px',
+    marginBottom: '6px',
+  },
+  countdownTimerSmall: {
+    fontSize: '28px',
+    fontWeight: '800',
+    color: '#7c3aed',
+  },
+  infoBoxThankYou: {
+    background: '#f9fafb',
+    borderRadius: '12px',
+    padding: '16px',
+    marginBottom: '24px',
+  },
+  infoTextThankYou: {
+    fontSize: '14px',
+    color: '#6b7280',
+    margin: 0,
+    lineHeight: '1.6',
   },
   
   // ADMIN
