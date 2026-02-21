@@ -20,7 +20,7 @@ const CONFIG = {
   sessionKey: 'carnival-voted-v6', // ← cambia v1 → v2, v3... per resettare il "hai già votato" di tutti gli utenti
   votingStartTime: new Date('2026-02-22T00:15:00').getTime(),
   votingDuration: 30 * 60 * 1000,
-  adminPassword: 'carnevale2026',
+  adminPassword: 'ludovica2026',
   categories: [
     {
       id: 'cat1',
@@ -718,7 +718,7 @@ service cloud.firestore {
       <div style={styles.homeContainer}>
         <img src="/logo.png" alt="Feel the Aura" style={styles.logoLarge} onError={(e) => e.target.style.display = 'none'} />
         
-        <h1 style={styles.welcomeTitle}>Benvenuti al Voting Event</h1>
+        <h1 style={styles.welcomeTitle}>Benvenuti nell'area voti</h1>
         <p style={styles.welcomeSubtitle}>Votate i vostri preferiti nelle 4 categorie!</p>
 
         <div style={styles.categoriesList}>
