@@ -27,9 +27,9 @@ const CONFIG = {
       name: 'Miglior Gruppo Iconico',
       icon: '🎨',
       options: [
-        { name: 'Gruppo 1', image: '/gruppo1.jpg' },
-        { name: 'Gruppo 2', image: '/gruppo2.jpg' },
-        { name: 'Gruppo 3', image: '/gruppo3.jpg' }
+        { name: 'Gruppo 1', image: '/gruppo1.jpeg' },
+        { name: 'Gruppo 2', image: '/gruppo2.jpeg' },
+        { name: 'Gruppo 3', image: '/gruppo3.jpeg' }
       ]
     },
     {
@@ -37,9 +37,9 @@ const CONFIG = {
       name: 'Gruppo Più Divertente',
       icon: '😂',
       options: [
-        { name: 'Gruppo 4', image: '/gruppo4.jpg' },
-        { name: 'Gruppo 5', image: '/gruppo5.jpg' },
-        { name: 'Gruppo 6', image: '/gruppo6.jpg' }
+        { name: 'Gruppo 4', image: '/gruppo4.jpeg' },
+        { name: 'Gruppo 5', image: '/gruppo5.jpeg' },
+        { name: 'Gruppo 6', image: '/gruppo6.jpeg' }
       ]
     },
     {
@@ -47,9 +47,9 @@ const CONFIG = {
       name: 'Miglior Coppia Iconica',
       icon: '👑',
       options: [
-        { name: 'Coppia 1', image: '/coppia1.jpg' },
-        { name: 'Coppia 2', image: '/coppia2.jpg' },
-        { name: 'Coppia 3', image: '/coppia3.jpg' }
+        { name: 'Coppia 1', image: '/coppia1.jpeg' },
+        { name: 'Coppia 2', image: '/coppia2.jpeg' },
+        { name: 'Coppia 3', image: '/coppia3.jpeg' }
       ]
     },
     {
@@ -57,9 +57,9 @@ const CONFIG = {
       name: 'Coppia Più Divertente',
       icon: '👥',
       options: [
-        { name: 'Coppia 4', image: '/coppia4.jpg' },
-        { name: 'Coppia 5', image: '/coppia5.jpg' },
-        { name: 'Coppia 6', image: '/coppia6.jpg' }
+        { name: 'Coppia 4', image: '/coppia4.jpeg' },
+        { name: 'Coppia 5', image: '/coppia5.jpeg' },
+        { name: 'Coppia 6', image: '/coppia6.jpeg' }
       ]
     }
   ]
